@@ -3,116 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>회사 연혁 - 3D 인터랙티브 (라이트 모드)</title>
+    <title>회사 연혁 - 프리미엄 인포그래픽</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Poppins & Noto Sans KR -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Three.js for 3D Animation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
     <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #7c3aed;
+        }
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f8fafc; /* 밝은 회색 배경 */
+            background-color: #f1f5f9; /* slate-100 */
+            color: #0f172a; /* slate-900 */
         }
-        .font-poppins {
-            font-family: 'Poppins', sans-serif;
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+
+        /* 3D Canvas Container */
+        #interactive-canvas-container {
+            position: fixed;
+            top: 0; right: 0; bottom: 0; left: 0;
+            z-index: 0;
+            opacity: 0.3;
         }
 
-        /* 3D 캔버스 스타일 */
-        #interactive-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-        }
-        
-        /* 메인 콘텐츠 컨테이너 */
         .main-container {
             position: relative;
             z-index: 1;
         }
 
-        /* 타임라인 스타일 */
-        .timeline-item {
+        /* Decade Tabs */
+        .decade-tab {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            padding-left: 2.5rem;
-            padding-bottom: 3rem;
-            border-left: 2px solid #e5e7eb; /* 밝은 회색 라인 */
+            padding: 1rem 1.5rem;
         }
-        .timeline-item:last-child {
-            border-left-color: transparent;
-        }
-        .timeline-marker {
+        .decade-tab:after {
+            content: '';
             position: absolute;
-            left: -0.6rem;
-            top: 0.25rem;
-            width: 1.125rem;
-            height: 1.125rem;
-            border-radius: 9999px;
-            background-color: #f8fafc;
-            border: 3px solid #4f46e5; /* 인디고 색상 */
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .decade-tab.active {
+            color: var(--primary-color);
+        }
+        .decade-tab.active:after {
+            width: 60%;
+        }
+
+        /* Content Panel */
+        .content-panel {
+            display: none;
+            animation: fadeIn 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .content-panel.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Year Group Card */
+        .year-group {
+            background-color: white;
+            border: 1px solid #e2e8f0; /* slate-200 */
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-radius: 0.75rem; /* 12px */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
         }
-        .timeline-item:hover .timeline-marker {
-            transform: scale(1.4);
-            background-color: #4f46e5;
-            box-shadow: 0 0 15px rgba(79, 70, 229, 0.7);
-        }
-
-        /* 카드 스타일 */
-        .history-card {
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .timeline-item:hover .history-card {
-            transform: translateY(-8px);
+        .year-group:hover {
+            transform: translateY(-10px);
             box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            border-color: #c7d2fe; /* indigo-200 */
+        }
+        
+        /* 연도 헤더 그래픽 */
+        .year-header {
+            position: relative;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='20' viewBox='0 0 100 20'%3E%3Cdefs%3E%3Cpattern id='p' width='20' height='20' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='5' cy='5' r='1' fill='%236366f1'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23p)' opacity='0.05'/%3E%3C/svg%3E");
         }
 
-
-        /* 스크롤 애니메이션 */
-        .scroll-fade-in {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        /* History Item List */
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
-        .scroll-fade-in.is-visible {
-            opacity: 1;
-            transform: translateY(0);
+        .history-item-icon {
+            flex-shrink: 0;
+            width: 2.25rem; /* 36px */
+            height: 2.25rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            border: 2px solid;
         }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="antialiased">
 
-    <canvas id="interactive-canvas"></canvas>
+    <div id="interactive-canvas-container"></div>
 
-    <div class="main-container container mx-auto px-4 py-16 md:py-24">
-        <header class="text-center mb-20">
-            <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 font-poppins tracking-tight">
-                <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">
-                    COMPANY HISTORY
-                </span>
+    <div class="main-container container mx-auto px-4 py-12 md:py-20">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800 font-poppins tracking-tight">
+                COMPANY HISTORY
             </h1>
-            <p class="mt-4 text-lg text-gray-600">주식회사 한국레이더시스템의 진취적인 발자취</p>
+            <p class="mt-4 text-lg text-slate-500">주식회사 한국레이더시스템의 진취적인 발자취</p>
         </header>
 
-        <div id="timeline-container">
-            <!-- 자바스크립트로 동적 생성 -->
+        <div class="bg-white/50 backdrop-blur-xl p-2 rounded-xl shadow-2xl border border-slate-200">
+            <!-- Decade Navigation Tabs -->
+            <nav id="decade-nav" class="flex justify-center items-center border-b-2 border-slate-200">
+                <!-- Tabs are generated by JS -->
+            </nav>
+
+            <!-- Content Area -->
+            <div id="content-area" class="p-6 md:p-10 min-h-[500px]">
+                <!-- Content panels are generated by JS -->
+            </div>
         </div>
     </div>
 
     <script>
         /**
-         * Oopy.io & Notion Embed Resizer v8 (Ultra Stable)
+         * Oopy.io & Notion Embed Resizer v18 (Final Stable)
          */
         (function() {
             if (window.self === window.top) return;
             const resizer = {
-                lastHeight: 0, timer: null,
+                lastHeight: 0, debounceTimer: null,
                 sendHeight: function() {
                     requestAnimationFrame(() => {
                         const currentHeight = document.documentElement.scrollHeight;
@@ -122,17 +161,17 @@
                         }
                     });
                 },
-                scheduleSendHeight: function() {
-                    clearTimeout(this.timer);
-                    this.timer = setTimeout(() => this.sendHeight(), 150);
-                },
                 init: function() {
-                    const observer = new MutationObserver(() => this.scheduleSendHeight());
+                    const observer = new MutationObserver(() => {
+                        clearTimeout(this.debounceTimer);
+                        this.debounceTimer = setTimeout(() => this.sendHeight(), 150);
+                    });
                     observer.observe(document.body, { attributes: true, childList: true, subtree: true, characterData: true });
-                    window.addEventListener('resize', () => this.scheduleSendHeight());
+                    window.addEventListener('resize', () => this.sendHeight());
                     window.addEventListener('load', () => {
-                        this.scheduleSendHeight();
-                        setTimeout(() => this.scheduleSendHeight(), 500);
+                        this.sendHeight();
+                        setTimeout(() => this.sendHeight(), 300);
+                        setTimeout(() => this.sendHeight(), 600);
                     });
                 }
             };
@@ -140,67 +179,86 @@
         })();
 
         document.addEventListener('DOMContentLoaded', function() {
-            // --- 3D Background Animation ---
-            let scene, camera, renderer, points;
-            let mouseX = 0, mouseY = 0;
-            const canvas = document.getElementById('interactive-canvas');
+            // --- Interactive 3D Data Grid Animation ---
+            let scene, camera, renderer, particles;
+            let mouse = new THREE.Vector2();
+            const container = document.getElementById('interactive-canvas-container');
 
             function init3D() {
                 scene = new THREE.Scene();
-                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.z = 50;
+                camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+                camera.position.set(0, 0, 150);
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                container.appendChild(renderer.domElement);
 
-                renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-                const pointGeometry = new THREE.BufferGeometry();
-                const numPoints = 1500;
-                const positions = new Float32Array(numPoints * 3);
-                for (let i = 0; i < numPoints; i++) {
-                    positions[i * 3] = (Math.random() - 0.5) * 200;
-                    positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
-                    positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
-                }
-                pointGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                // 흰색 배경에 잘 보이도록 파티클 색상 변경 (e.g., 인디고)
-                const pointMaterial = new THREE.PointsMaterial({ color: 0x4f46e5, size: 0.25 });
-                points = new THREE.Points(pointGeometry, pointMaterial);
-                scene.add(points);
+                const numParticles = 7000;
+                const positions = new Float32Array(numParticles * 3);
+                const colors = new Float32Array(numParticles * 3);
+                const color1 = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--primary-color'));
+                const color2 = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--secondary-color'));
                 
-                document.addEventListener('mousemove', onMouseMove);
-                window.addEventListener('resize', onWindowResize);
-            }
+                for (let i = 0; i < numParticles; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 800;
+                    positions[i * 3 + 1] = (Math.random() - 0.5) * 800;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 800;
+                    
+                    const randomColor = Math.random() > 0.5 ? color1 : color2;
+                    colors[i*3] = randomColor.r;
+                    colors[i*3+1] = randomColor.g;
+                    colors[i*3+2] = randomColor.b;
+                }
 
-            function onMouseMove(event) {
-                mouseX = (event.clientX - window.innerWidth / 2) / 5;
-                mouseY = (event.clientY - window.innerHeight / 2) / 5;
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                const material = new THREE.PointsMaterial({
+                    size: 0.7,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.8,
+                    sizeAttenuation: true
+                });
+
+                particles = new THREE.Points(geometry, material);
+                scene.add(particles);
+
+                window.addEventListener('resize', onWindowResize);
+                document.body.addEventListener('mousemove', onMouseMove);
             }
 
             function onWindowResize() {
-                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.aspect = container.offsetWidth / container.offsetHeight;
                 camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+            }
+
+            function onMouseMove(event) {
+                mouse.x = (event.clientX / window.innerWidth - 0.5);
+                mouse.y = (event.clientY / window.innerHeight - 0.5);
             }
 
             function animate3D() {
                 requestAnimationFrame(animate3D);
                 const time = Date.now() * 0.00005;
+                
+                particles.rotation.y = time * 0.5;
 
-                camera.position.x += (mouseX - camera.position.x) * 0.05;
-                camera.position.y += (-mouseY - camera.position.y) * 0.05;
+                camera.position.x += (mouse.x * 50 - camera.position.x) * 0.03;
+                camera.position.y += (-mouse.y * 50 - camera.position.y) * 0.03;
                 camera.lookAt(scene.position);
                 
-                points.rotation.x = time * 0.25;
-                points.rotation.y = time * 0.5;
-
                 renderer.render(scene, camera);
             }
 
-            init3D();
-            animate3D();
+            if (container) {
+                init3D();
+                animate3D();
+            }
 
-            // --- Timeline Generation ---
+            // --- Timeline Generation and Tab Logic ---
             const historyData = [
                 { date: "2025. 05", event: "영상감시장치 다수공급자계약(MAS) 규격 추가" },
                 { date: "2025. 02", event: "주식회사 한국레이더시스템 으로 사명 변경" },
@@ -230,62 +288,98 @@
                 { date: "2008. 06", event: "품징경영 시스템 ISO 9001 / KS A 9001 획득" },
                 { date: "2004. 04", event: "(주)사라다 법인 설립" },
             ];
-            
-            const timelineContainer = document.getElementById('timeline-container');
-            let currentYear = null;
 
-            historyData.forEach((item, index) => {
-                const year = item.date.substring(0, 4);
-
-                if (year !== currentYear) {
-                    currentYear = year;
-                    const yearHeader = document.createElement('div');
-                    yearHeader.className = 'timeline-item scroll-fade-in';
-                    yearHeader.innerHTML = `
-                        <div class="timeline-marker !bg-indigo-600 !border-indigo-500"></div>
-                        <h2 class="font-poppins text-5xl font-extrabold text-gray-900">${year}</h2>
-                    `;
-                    timelineContainer.appendChild(yearHeader);
-                }
-
-                const timelineItem = document.createElement('div');
-                timelineItem.className = 'timeline-item scroll-fade-in';
-                timelineItem.innerHTML = `
-                    <div class="timeline-marker"></div>
-                    <div class="ml-4 p-6 rounded-lg bg-white shadow-md border border-gray-200 history-card">
-                        <p class="text-sm font-semibold text-indigo-600 font-poppins">${item.date}</p>
-                        <p class="mt-2 text-lg font-medium text-gray-700">${item.event}</p>
-                    </div>
-                `;
-                timelineContainer.appendChild(timelineItem);
-            });
-
-            // --- Scroll Animation ---
-            const scrollElements = document.querySelectorAll('.scroll-fade-in');
-            const elementInView = (el, dividend = 1) => {
-                const elementTop = el.getBoundingClientRect().top;
-                return (
-                    elementTop <= (window.innerHeight || document.documentElement.clientHeight) / dividend
-                );
+            const eventKeywords = {
+                'award': { icon: '🏆', color: 'border-amber-400 bg-amber-50 text-amber-600', keywords: ['인증', '지정', '선정', '획득', '등록', '수상'] },
+                'partnership': { icon: '🤝', color: 'border-sky-400 bg-sky-50 text-sky-600', keywords: ['협약', '계약', 'MOU', '협력'] },
+                'development': { icon: '💡', color: 'border-violet-400 bg-violet-50 text-violet-600', keywords: ['개발', '출시', '시스템', '사업'] },
+                'corporate': { icon: '🏢', color: 'border-slate-400 bg-slate-100 text-slate-600', keywords: ['설립', '변경', '이전', '부문', '증자'] }
             };
 
-            const displayScrollElement = (element) => {
-                element.classList.add('is-visible');
-            };
-
-            const handleScrollAnimation = () => {
-                scrollElements.forEach((el) => {
-                    if (elementInView(el, 1.25)) {
-                        displayScrollElement(el);
+            function getEventInfo(eventText) {
+                for (const type in eventKeywords) {
+                    for (const keyword of eventKeywords[type].keywords) {
+                        if (eventText.includes(keyword)) {
+                            return eventKeywords[type];
+                        }
                     }
-                });
-            };
+                }
+                return { icon: '🔹', color: 'border-gray-300 bg-gray-50 text-gray-600' };
+            }
+            
+            const groupedByDecade = historyData.reduce((acc, item) => {
+                const year = parseInt(item.date.substring(0, 4));
+                const decade = Math.floor(year / 10) * 10;
+                if (!acc[decade]) acc[decade] = [];
+                acc[decade].push(item);
+                return acc;
+            }, {});
 
-            window.addEventListener('scroll', () => {
-                handleScrollAnimation();
+            const decadeNav = document.getElementById('decade-nav');
+            const contentArea = document.getElementById('content-area');
+            const decades = Object.keys(groupedByDecade).sort((a,b) => b-a);
+            
+            decades.forEach(decade => {
+                const tab = document.createElement('button');
+                tab.className = 'decade-tab font-poppins font-bold text-lg text-slate-500';
+                tab.textContent = `${decade}s`;
+                tab.dataset.decade = decade;
+                decadeNav.appendChild(tab);
+
+                const panel = document.createElement('div');
+                panel.className = 'content-panel';
+                panel.dataset.decade = decade;
+                
+                const groupedByYear = groupedByDecade[decade].reduce((acc, item) => {
+                    const year = item.date.substring(0, 4);
+                    if (!acc[year]) acc[year] = [];
+                    acc[year].push(item.event);
+                    return acc;
+                }, {});
+
+                let panelContent = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
+                const sortedYears = Object.keys(groupedByYear).sort((a,b) => b-a);
+                sortedYears.forEach(year => {
+                    panelContent += `
+                        <div class="year-group">
+                            <div class="year-header">
+                                <h3 class="font-poppins text-3xl font-bold text-slate-800">${year}</h3>
+                            </div>
+                            <ul class="p-6 pt-4 space-y-4">
+                                ${groupedByYear[year].map(event => {
+                                    const { icon, color } = getEventInfo(event);
+                                    return `
+                                    <li class="history-item">
+                                        <div class="history-item-icon ${color}">${icon}</div>
+                                        <span class="text-slate-600">${event}</span>
+                                    </li>`
+                                }).join('')}
+                            </ul>
+                        </div>`;
+                });
+                panelContent += `</div>`;
+                panel.innerHTML = panelContent;
+                contentArea.appendChild(panel);
             });
-            // Initial check
-            handleScrollAnimation();
+
+            const tabs = document.querySelectorAll('.decade-tab');
+            const panels = document.querySelectorAll('.content-panel');
+
+            function activateTab(decade) {
+                tabs.forEach(t => t.classList.toggle('active', t.dataset.decade === decade));
+                panels.forEach(p => p.classList.toggle('active', p.dataset.decade === decade));
+            }
+
+            decadeNav.addEventListener('click', (e) => {
+                const targetTab = e.target.closest('.decade-tab');
+                if(targetTab) {
+                    activateTab(targetTab.dataset.decade);
+                }
+            });
+
+            if (decades.length > 0) {
+                activateTab(decades[0]);
+            }
         });
     </script>
 </body>
