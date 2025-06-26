@@ -3,96 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>회사 연혁</title>
+    <title>회사 연혁 - 3D 인터랙티브 (라이트 모드)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter & Noto Sans KR -->
+    <!-- Google Fonts: Poppins & Noto Sans KR -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Three.js for 3D Animation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
-            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc; /* 밝은 회색 배경 */
+        }
+        .font-poppins {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* 3D 캔버스 스타일 */
+        #interactive-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        /* 메인 콘텐츠 컨테이너 */
+        .main-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 타임라인 스타일 */
+        .timeline-item {
+            position: relative;
+            padding-left: 2.5rem;
+            padding-bottom: 3rem;
+            border-left: 2px solid #e5e7eb; /* 밝은 회색 라인 */
+        }
+        .timeline-item:last-child {
+            border-left-color: transparent;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: -0.6rem;
+            top: 0.25rem;
+            width: 1.125rem;
+            height: 1.125rem;
+            border-radius: 9999px;
+            background-color: #f8fafc;
+            border: 3px solid #4f46e5; /* 인디고 색상 */
+            transition: all 0.3s ease;
+        }
+        .timeline-item:hover .timeline-marker {
+            transform: scale(1.4);
+            background-color: #4f46e5;
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.7);
+        }
+
+        /* 카드 스타일 */
+        .history-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .timeline-item:hover .history-card {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+
+        /* 스크롤 애니메이션 */
+        .scroll-fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .scroll-fade-in.is-visible {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="text-gray-800">
 
-    <div class="container mx-auto px-4 py-16">
-        <header class="text-center mb-16">
-            <p class="text-3xl md:text-4xl font-bold text-gray-900">주식회사 한국레이더시스템</p>
+    <canvas id="interactive-canvas"></canvas>
+
+    <div class="main-container container mx-auto px-4 py-16 md:py-24">
+        <header class="text-center mb-20">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 font-poppins tracking-tight">
+                <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">
+                    COMPANY HISTORY
+                </span>
+            </h1>
+            <p class="mt-4 text-lg text-gray-600">주식회사 한국레이더시스템의 진취적인 발자취</p>
         </header>
 
-        <!-- 타임라인 그리드 컨테이너 -->
-        <div id="timeline-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            <!-- 자바스크립트로 타임라인 카드가 여기에 추가됩니다. -->
+        <div id="timeline-container">
+            <!-- 자바스크립트로 동적 생성 -->
         </div>
     </div>
 
     <script>
-        // 회사 연혁 데이터 (최신순)
-        const historyData = [
-            { date: "2025. 05", event: "영상감시장치 다수공급자계약(MAS) 규격 추가" },
-            { date: "2025. 02", event: "주식회사 한국레이더시스템 으로 사명 변경" },
-            { date: "2024. 05", event: "영상감시장치 다수공급자계약(MAS) 등록" },
-            { date: "2023. 08", event: "동의대학교 LINC 3.0사업단 상호협력 협약" },
-            { date: "2021. 01", event: "혁신제품 지정 인증서" },
-            { date: "2020. 10", event: "다목적 영상감시시스템 V1.0.0.1 소프트웨어품질 인증서획득" },
-            { date: "2017. 06", event: "중소기업 수출기업 기술개발 사업" },
-            { date: "2017. 06", event: "동아대학교산학협력단 상호협력 협약" },
-            { date: "2017. 05", event: "부산대학교 URP 산학융합 공동 R&D 연구개발 사업" },
-            { date: "2017. 03", event: "지역특확기술 개발,확산 개방형 연구실 운영사업" },
-            { date: "2016. 01", event: "부산광역시 선도기업 지정 – 창조문화산업 부문" },
-            { date: "2015. 07", event: "품질인증 Q 마크 지정" },
-            { date: "2015. 07", event: "중소기업청 성능인정 지정 – 번호판 인식 입체화 이미지 변환 기법 및 자가 진단스마트차량번호 인식 시스템" },
-            { date: "2015. 01", event: "한국건설기술연구원 AVI(자동차량인식장치) 인정 시험 최상급 등급 획득" },
-            { date: "2013. 02", event: "중소기업청 성능인정 지정 - Multi- Object의 Cycle 추적기능 CCTV 시스템" },
-            { date: "2013. 01", event: "부산광역시 선도기업 지정 – 전략산업 IT분야" },
-            { date: "2012. 10", event: "우수발명품 등록-객체 촬영 시스템" },
-            { date: "2012. 05", event: "‘객체인식 시스템’’Good Software’ 인증 획득" },
-            { date: "2012. 05", event: "‘객체인식 시스템’ CE 인증 획득" },
-            { date: "2010. 10", event: "조달우수제품 지정-차량번호 인식 시스템" },
-            { date: "2010. 07", event: "한국산업기술시험연구원 K마크 인증 획득" },
-            { date: "2009. 11", event: "벤처기업 인증" },
-            { date: "2009. 11", event: "이노비즈 기업 인증" },
-            { date: "2009. 01", event: "도로교통관리공단 성능인증" },
-            { date: "2008. 06", event: "‘경영혁신형 중소기업’ 선정" },
-            { date: "2008. 06", event: "품징경영 시스템 ISO 9001 / KS A 9001 획득" },
-            { date: "2004. 04", event: "(주)사라다 법인 설립" },
-        ];
-        
-        const timelineGrid = document.getElementById('timeline-grid');
+        /**
+         * Oopy.io & Notion Embed Resizer v8 (Ultra Stable)
+         */
+        (function() {
+            if (window.self === window.top) return;
+            const resizer = {
+                lastHeight: 0, timer: null,
+                sendHeight: function() {
+                    requestAnimationFrame(() => {
+                        const currentHeight = document.documentElement.scrollHeight;
+                        if (currentHeight !== this.lastHeight) {
+                            this.lastHeight = currentHeight;
+                            window.parent.postMessage({ oopyEvent: 'setHeight', height: currentHeight }, '*');
+                        }
+                    });
+                },
+                scheduleSendHeight: function() {
+                    clearTimeout(this.timer);
+                    this.timer = setTimeout(() => this.sendHeight(), 150);
+                },
+                init: function() {
+                    const observer = new MutationObserver(() => this.scheduleSendHeight());
+                    observer.observe(document.body, { attributes: true, childList: true, subtree: true, characterData: true });
+                    window.addEventListener('resize', () => this.scheduleSendHeight());
+                    window.addEventListener('load', () => {
+                        this.scheduleSendHeight();
+                        setTimeout(() => this.scheduleSendHeight(), 500);
+                    });
+                }
+            };
+            resizer.init();
+        })();
 
-        // 데이터를 기반으로 타임라인 카드 생성
-        historyData.forEach(item => {
-            // 아이템 카드 컨테이너
-            const card = document.createElement('div');
-            // h-full 클래스로 그리드 행의 카드 높이를 동일하게 맞춤
-            // hover 효과로 사용자 인터랙션 추가
-            card.className = 'bg-white p-6 rounded-lg shadow-lg border border-gray-200 flex flex-col h-full transform hover:-translate-y-2 transition-transform duration-300';
-            
-            // 연도 (크게 강조)
-            const yearElement = document.createElement('p');
-            yearElement.className = 'text-blue-600 font-bold text-2xl mb-2';
-            yearElement.textContent = item.date.substring(0, 4); 
-            
-            // 이벤트 설명
-            const eventElement = document.createElement('h3');
-            // flex-grow 클래스로 내용 길이에 상관없이 카드의 아래쪽 영역을 채움
-            eventElement.className = 'font-semibold text-gray-800 text-base leading-relaxed flex-grow';
-            eventElement.textContent = item.event;
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- 3D Background Animation ---
+            let scene, camera, renderer, points;
+            let mouseX = 0, mouseY = 0;
+            const canvas = document.getElementById('interactive-canvas');
 
-            // 전체 날짜 (월.일)
-            const fullDateElement = document.createElement('p');
-            fullDateElement.className = 'text-gray-500 font-medium text-sm mt-4';
-            fullDateElement.textContent = item.date;
+            function init3D() {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = 50;
 
-            // 요소를 카드에 추가
-            card.appendChild(yearElement);
-            card.appendChild(eventElement);
-            card.appendChild(fullDateElement);
+                renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+                const pointGeometry = new THREE.BufferGeometry();
+                const numPoints = 1500;
+                const positions = new Float32Array(numPoints * 3);
+                for (let i = 0; i < numPoints; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 200;
+                    positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+                }
+                pointGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                // 흰색 배경에 잘 보이도록 파티클 색상 변경 (e.g., 인디고)
+                const pointMaterial = new THREE.PointsMaterial({ color: 0x4f46e5, size: 0.25 });
+                points = new THREE.Points(pointGeometry, pointMaterial);
+                scene.add(points);
+                
+                document.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('resize', onWindowResize);
+            }
+
+            function onMouseMove(event) {
+                mouseX = (event.clientX - window.innerWidth / 2) / 5;
+                mouseY = (event.clientY - window.innerHeight / 2) / 5;
+            }
+
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            function animate3D() {
+                requestAnimationFrame(animate3D);
+                const time = Date.now() * 0.00005;
+
+                camera.position.x += (mouseX - camera.position.x) * 0.05;
+                camera.position.y += (-mouseY - camera.position.y) * 0.05;
+                camera.lookAt(scene.position);
+                
+                points.rotation.x = time * 0.25;
+                points.rotation.y = time * 0.5;
+
+                renderer.render(scene, camera);
+            }
+
+            init3D();
+            animate3D();
+
+            // --- Timeline Generation ---
+            const historyData = [
+                { date: "2025. 05", event: "영상감시장치 다수공급자계약(MAS) 규격 추가" },
+                { date: "2025. 02", event: "주식회사 한국레이더시스템 으로 사명 변경" },
+                { date: "2024. 05", event: "영상감시장치 다수공급자계약(MAS) 등록" },
+                { date: "2023. 08", event: "동의대학교 LINC 3.0사업단 상호협력 협약" },
+                { date: "2021. 01", event: "혁신제품 지정 인증서" },
+                { date: "2020. 10", event: "다목적 영상감시시스템 V1.0.0.1 소프트웨어품질 인증서획득" },
+                { date: "2017. 06", event: "중소기업 수출기업 기술개발 사업" },
+                { date: "2017. 06", event: "동아대학교산학협력단 상호협력 협약" },
+                { date: "2017. 05", event: "부산대학교 URP 산학융합 공동 R&D 연구개발 사업" },
+                { date: "2017. 03", event: "지역특확기술 개발,확산 개방형 연구실 운영사업" },
+                { date: "2016. 01", event: "부산광역시 선도기업 지정 – 창조문화산업 부문" },
+                { date: "2015. 07", event: "품질인증 Q 마크 지정" },
+                { date: "2015. 07", event: "중소기업청 성능인정 지정 – 번호판 인식 입체화 이미지 변환 기법 및 자가 진단스마트차량번호 인식 시스템" },
+                { date: "2015. 01", event: "한국건설기술연구원 AVI(자동차량인식장치) 인정 시험 최상급 등급 획득" },
+                { date: "2013. 02", event: "중소기업청 성능인정 지정 - Multi- Object의 Cycle 추적기능 CCTV 시스템" },
+                { date: "2013. 01", event: "부산광역시 선도기업 지정 – 전략산업 IT분야" },
+                { date: "2012. 10", event: "우수발명품 등록-객체 촬영 시스템" },
+                { date: "2012. 05", event: "‘객체인식 시스템’’Good Software’ 인증 획득" },
+                { date: "2012. 05", event: "‘객체인식 시스템’ CE 인증 획득" },
+                { date: "2010. 10", event: "조달우수제품 지정-차량번호 인식 시스템" },
+                { date: "2010. 07", event: "한국산업기술시험연구원 K마크 인증 획득" },
+                { date: "2009. 11", event: "벤처기업 인증" },
+                { date: "2009. 11", event: "이노비즈 기업 인증" },
+                { date: "2009. 01", event: "도로교통관리공단 성능인증" },
+                { date: "2008. 06", event: "‘경영혁신형 중소기업’ 선정" },
+                { date: "2008. 06", event: "품징경영 시스템 ISO 9001 / KS A 9001 획득" },
+                { date: "2004. 04", event: "(주)사라다 법인 설립" },
+            ];
             
-            timelineGrid.appendChild(card);
+            const timelineContainer = document.getElementById('timeline-container');
+            let currentYear = null;
+
+            historyData.forEach((item, index) => {
+                const year = item.date.substring(0, 4);
+
+                if (year !== currentYear) {
+                    currentYear = year;
+                    const yearHeader = document.createElement('div');
+                    yearHeader.className = 'timeline-item scroll-fade-in';
+                    yearHeader.innerHTML = `
+                        <div class="timeline-marker !bg-indigo-600 !border-indigo-500"></div>
+                        <h2 class="font-poppins text-5xl font-extrabold text-gray-900">${year}</h2>
+                    `;
+                    timelineContainer.appendChild(yearHeader);
+                }
+
+                const timelineItem = document.createElement('div');
+                timelineItem.className = 'timeline-item scroll-fade-in';
+                timelineItem.innerHTML = `
+                    <div class="timeline-marker"></div>
+                    <div class="ml-4 p-6 rounded-lg bg-white shadow-md border border-gray-200 history-card">
+                        <p class="text-sm font-semibold text-indigo-600 font-poppins">${item.date}</p>
+                        <p class="mt-2 text-lg font-medium text-gray-700">${item.event}</p>
+                    </div>
+                `;
+                timelineContainer.appendChild(timelineItem);
+            });
+
+            // --- Scroll Animation ---
+            const scrollElements = document.querySelectorAll('.scroll-fade-in');
+            const elementInView = (el, dividend = 1) => {
+                const elementTop = el.getBoundingClientRect().top;
+                return (
+                    elementTop <= (window.innerHeight || document.documentElement.clientHeight) / dividend
+                );
+            };
+
+            const displayScrollElement = (element) => {
+                element.classList.add('is-visible');
+            };
+
+            const handleScrollAnimation = () => {
+                scrollElements.forEach((el) => {
+                    if (elementInView(el, 1.25)) {
+                        displayScrollElement(el);
+                    }
+                });
+            };
+
+            window.addEventListener('scroll', () => {
+                handleScrollAnimation();
+            });
+            // Initial check
+            handleScrollAnimation();
         });
     </script>
 </body>
